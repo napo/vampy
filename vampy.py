@@ -31,8 +31,8 @@ def main():
                      dest="test", help="do a test")
     (options, args) = parser.parse_args()
     if options.test:
-#        try:
-            infile = "examples/1.leg"
+        try:
+            infile = "examples/test.leg"
             match = Match(infile)
             print "%s - %s " % (match.daymatch(), match.time())
             print "%s - %s " % (match.location(), match.gym())
@@ -40,13 +40,15 @@ def main():
             print "sets played %s" % match.totsets()
             for i in range(match.totsets()):
                 print "set %i - %s (%s, %s, %s)" % \
-                (i+1,match.sets[i].pointsinset(),match.sets[i].partialsetpoints(1),
-                 match.sets[i].partialsetpoints(2),match.sets[i].partialsetpoints(3))  
+                (i+1,match.sets[i].pointsinset(),
+                match.sets[i].partialsetpoints(1),
+                match.sets[i].partialsetpoints(2),
+                match.sets[i].partialsetpoints(3))  
             print match.teams[0].players[4].name()
             print elements.rolename(match.teams[0].players[1].role())
-#        except IOError as io_error:
-#            print(io_error)
-#            sys.exit(1)
+        except IOError as io_error:
+            print(io_error)
+            sys.exit(1)
     sys.exit(0)
              
 
