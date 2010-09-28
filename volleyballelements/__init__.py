@@ -13,8 +13,9 @@
 """
     all elements needes to describe a match
 """
-from elements import Team, Player
- 
+from elements import Team, Player, isvalidfoundamental,isvalidhightness
+
+
 def splitactionseachset(data):
     """
     divide action for each sets
@@ -106,19 +107,19 @@ class Match():
        
         players = {}            
         for ply  in (getdata(data, '[Player2]')):
-            players[int(ply[2])] = (Player(ply))
+            players[int(ply.split(";")[1])] = (Player(ply))
         self.teams[0].players = players
 
         players = {}
         for ply  in (getdata(data, '[Scout]')):
-            players[int(ply[2])] = (Player(ply))
+            players[int(ply.split(";")[1])] = (Player(ply))
         self.teams[1].players = players
      
         actioneachsetdata = splitactionseachset(data)
-
+        
         for setplayed in actioneachsetdata:
             for actiondata in actioneachsetdata[setplayed]:
-                act = Action()                        
+                act = Action(setplayed)                        
                 if (actiondata.find("*P") > -1):
                     self.sets[setplayed -1].setterteam1 = \
                     actiondata.split(";")[0].replace("*P","");
@@ -133,11 +134,80 @@ class Match():
                 elif ((actiondata.find("*p") > -1) or\
                        actiondata.find("ap") > -1):
                     act.endaction = actiondata.split(";")[0]
+                elif (actiondata.find("*T") > -1):
+                    pass
+                elif (actiondata.find("aT") >-1):
+                    pass
+                elif (actiondata.find("*C") > -1):
+                    pass
+                elif (actiondata.find("aC") >- 1):
+                    pass
                 else:
                     act.addcode(actiondata)
-        #print self.datasets[3][0].endaction
+                self.parseaction(act)
+                
+    def parseaction(self,action):
+        codes = action.codes
+        for c in codes:
+            np= c.player()
+            kt= c.kindtouch()
+            ht = c.hightnesstouch()
+            tv = c.touchvalue()
+            if (isvalidfoundamental(kt) and \
+                isvalidhightness(ht)):
+                if (np != 99):
+                    if(np-50) > 0:
+                        np = np -50
+                        self.teams[1].players[np].touches.addtouch(kt,ht,tv)
+                    else:
+                        self.teams[0].players[np].touches.addtouch(kt,ht,tv)
+                
         
-    def daymatch(self):
+    def summary(self):
+        #Match info
+        print "%s %s" % (self.kind(), self.season())
+        print "%s %s" % (self.daymatch(), self.time())
+        print "%s %s" % (self.gym(), self.location())
+        print ""
+        print "%s - %s" % (self.teams[0].name(), \
+                           self.teams[1].name())
+        print "%s - %s" % (self.teams[0].winnedsets(),\
+                               self.teams[1].winnedsets())
+        print ""
+        #Set info
+        k = 1
+        for s in self.sets:
+            pp = "" 
+            sp  = "Set %i  %s" % (k,s.partialsetpoints(4)) 
+            for r in range(3):
+                 pp += " " + s.partialsetpoints(r+1)
+            print "%s (%s)" % (sp,pp)
+            k += 1
+        print ""
+        #Stats team1
+        print self.teams[0].name().upper()
+        for pk in self.teams[0].players:
+            ret = ""
+            for r in range(self.totsets()):
+               ret += " " + self.teams[0].players[pk].rotation(r+1)
+               stats = self.teams[0].players[pk].touches.touches("S","V","#")
+            print "%s %s \t %s" % (pk,\
+                            self.teams[0].players[pk].name(),\
+                            ret)     
+        print ""
+        print ""
+
+        print self.teams[1].name().upper()
+        for pk in self.teams[1].players:
+            ret = ""
+            for r in range(self.totsets()):
+               ret += " " + self.teams[1].players[pk].rotation(r+1)
+               stats = self.teams[1].players[pk].touches.touches("S","V","#")
+            print "%s %s \t %s" % (pk,\
+                            self.teams[1].players[pk].name(),\
+                            ret)             
+        
+    def daymatch(self):                      
         """
             returns date of match (as string)
         """
@@ -180,7 +250,16 @@ class Match():
             returns number of sets played
         """
         return len(self.sets)
-        
+    def season(self):
+        """
+            returns season of the game
+        """
+        return self.matchinfo[2]
+    def kind(self):
+        """
+            returns the kind of the game
+        """
+        return self.matchinfo[3]
         
     def location(self):
         """
@@ -245,11 +324,12 @@ class Action():
     """
         a class to define a action (from service to the end point)
     """
-    def __init__(self):
+    def __init__(self,inset):
         self.codes = []
         self.endaction = ""
         self.setterzoneteam1 = 0
         self.setterzoneteam2 = 0 
+        self.set = inset
     
     def addcode(self, incode):
         """
@@ -263,7 +343,7 @@ class Code():
         a class to obtain informations from a touch ball and relative metadata
     """
     def __init__(self, code):
-        self.code = code
+        self.code = code.split(";")
         #evalaution = data[0]
         #pointkind = data[1]
         #afterpass = data[2]
@@ -271,12 +351,24 @@ class Code():
         #setterposteam2 = data[4]
         #actiontime = data[7]
         #whichset= data[8]
-    def balltouch(self):
-        """
-            the string that describe the ball touch
-        """
-        bto = self.code[0]
-        return bto   
+    def player(self):
+        pn = self.code[0][0:2]
+        return int(pn)
+    
+    def kindtouch(self):
+        kt = self.code[0][2]
+        return kt
+    def hightnesstouch(self):
+        ht = self.code[0][3]
+        return ht
+    def touchvalue(self):
+        tv = self.code[0][4]
+        return tv
+    def touchfrom(self):
+        return None
+    def touchto(self):
+        return None
+        
     def kindendaction(self):
         """
             kind of endend action (point or breakpoint)
@@ -316,3 +408,6 @@ class Code():
             returns the set number of this code
         """
         return int(self.code[8])
+
+
+        

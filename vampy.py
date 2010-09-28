@@ -34,18 +34,9 @@ def main():
         try:
             infile = "examples/test.leg"
             match = Match(infile)
-            print "%s - %s " % (match.daymatch(), match.time())
-            print "%s - %s " % (match.location(), match.gym())
-            print "%s - %s" % (match.teams[0].name(), match.teams[1].name())
-            print "sets played %s" % match.totsets()
-            for i in range(match.totsets()):
-                print "set %i - %s (%s, %s, %s)" % \
-                (i+1,match.sets[i].pointsinset(),
-                match.sets[i].partialsetpoints(1),
-                match.sets[i].partialsetpoints(2),
-                match.sets[i].partialsetpoints(3))  
-            print match.teams[0].players[4].name()
-            print elements.rolename(match.teams[0].players[1].role())
+            match.summary()
+
+            
         except IOError as io_error:
             print(io_error)
             sys.exit(1)
